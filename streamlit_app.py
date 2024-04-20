@@ -3,38 +3,90 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-"""
-# Welcome to Streamlit!
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+st.title('Fashion in Action')
+st.write('Purchasing Prediction for Loyalty Customers')
+user_input = st.text_input('Hello, User!')
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+# Global variable to keep track of the page number
+page_number = 1
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
+# Load your CSV data
+@st.cache  # Cache the data for better performance
+def load_data1():
+    url = "https://github.com/labdatamininglab/Fashion.git/frq_items.csv"
+    df = pd.read_csv(url)
+    return df
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+def load_data2():
+    url = "https://github.com/labdatamininglab/Fashion.git/recommendation.csv"
+    df = pd.read_csv(url)
+    return df
+
+
+def transformations(df):
+
+    df1 = df.drop(columns=['Unnamed: 0', 'support'], inplace=False)
+
+    df1['Item'] = df1['itemsets'].astype(str).str.extract(r"\{(.+?)\}")
+
+    unique_items = [item.strip() for sublist in df1['Item'].str.split(',') for item in sublist]
+
+    unique_items = list(set(unique_items))
+
+    unique_items.sort()
+
+    cleaned_items = [item.strip().strip("'") for item in unique_items]
+
+    list_one = []
+    list_two = []
+    list_three = []
+
+    # Iterate over each row in the dataframe
+    for index, row in df1.iterrows():
+        # Split the itemsets by comma and remove the leading and trailing whitespace
+        items = [item.strip().strip("'") for item in row['Item'].split(',')]
+        # Based on the number of items in the row, append to the respective list
+        if len(items) == 1:
+            list_one.append(items)
+        elif len(items) == 2:
+            list_two.append(items)
+        elif len(items) == 3:
+            list_three.append(items)
+            
+    return cleaned_items, list_one, list_two, list_three
+
+
+def main():
+    global page_number  # Use the global variable
+    
+    # Create a button to navigate to different pages
+    if st.button("BI Reporting"):
+        page_number = 1
+    elif st.button("Rules of Purchasing"):
+        page_number = 2
+    elif st.button("Recommendation"):
+        page_number = 3
+    elif st.button("Cluster"):
+        page_number = 4
+
+    # Display content based on the page number
+    if page_number == 1:
+        st.write('BI')        
+    elif page_number == 2:
+        # Load data for "Rules of Purchasing" 
+        dfx = load_data1()   
+        # cleaned_items, list_one, list_two, list_three = transformations(dfx)     
+        st.write('Rules')
+    elif page_number == 3:
+        dfy = load_data2()
+        st.write('Reco')
+    elif page_number == 4:
+        st.write('Cluster')
+        
+
+if __name__ == "__main__":
+    main()
