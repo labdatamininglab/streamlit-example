@@ -1,92 +1,84 @@
-import altair as alt
-import numpy as np
 import pandas as pd
+import numpy as np
+import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output
+# import plotly.express as px
 import streamlit as st
 
 
 
+# Define Your Streamlit App:
+# Create a Python script for your Streamlit application.
+# Import the necessary libraries (streamlit and pandas).
+# Read the cluster and recommendation CSV files into Pandas DataFrames.
 
-st.title('Fashion in Action')
-st.write('Purchasing Prediction for Loyalty Customers')
-user_input = st.text_input('Hello, User!')
+# Define Functions for Each Page:
+# Create separate functions to define the content of each page (show_cluster_page and show_recommendation_page).
+# Use Streamlit components like st.title, st.dataframe, and st.selectbox to display the content and interact with users.
 
+# Create Streamlit App Logic:
+# Use Streamlit's st.sidebar to create navigation buttons for switching between pages.
+# Define the logic to display the appropriate page content based on user selection.
 
-# Global variable to keep track of the page number
-page_number = 1
+# Run the Streamlit App:
+# Run the Streamlit app using streamlit run <filename>.py from the command line.
 
-# Load your CSV data
-@st.cache  # Cache the data for better performance
-def load_data1():
-    url = "https://github.com/labdatamininglab/Fashion.git/frq_items.csv"
-    df = pd.read_csv(url)
-    return df
+# Read CSV files
+cluster_df = pd.read_csv('cluster.csv')
+recommendation_df = pd.read_csv('recommendation.csv')
+items_df = pd.read_csv('frq_items.csv')
 
-def load_data2():
-    url = "https://github.com/labdatamininglab/Fashion.git/recommendation.csv"
-    df = pd.read_csv(url)
-    return df
+cluster_df = cluster_df.drop(columns=['Unnamed: 0'], inplace=False)
+recommendation_df = recommendation_df.drop(columns=['Unnamed: 0'], inplace=False)
 
+def show_title_page():
+    st.title('Fashion in Action')
+    st.write('')
+    st.write('')
+    if st.button("Recommendation Page"):
+        st.session_state.current_page = "Recommendation Page"
+    if st.button("Cluster Page"):
+        st.session_state.current_page = "Cluster Page"
 
-def transformations(df):
+    # Load and display the image
 
-    df1 = df.drop(columns=['Unnamed: 0', 'support'], inplace=False)
+     # Load and display the image with CSS style
+    st.markdown(
+        f'<style> .reportview-container .main .block-container{{max-width: 100%; padding-top: 0; padding-right: 0; padding-left: 0; padding-bottom: 0;}}</style>',
+        unsafe_allow_html=True,
+    )
 
-    df1['Item'] = df1['itemsets'].astype(str).str.extract(r"\{(.+?)\}")
+    st.image("image1.jpg", use_column_width=True)
 
-    unique_items = [item.strip() for sublist in df1['Item'].str.split(',') for item in sublist]
+# Define functions for each page
+def show_cluster_page():
+    st.title('Cluster Page')
+    customer_id = st.selectbox('Select Customer ID:', cluster_df['Customer ID'].unique())
+    cluster_info = cluster_df[cluster_df['Customer ID'] == customer_id]
+    st.dataframe(cluster_info)
+    if st.button("Back to Title Page"):
+        st.session_state.current_page = "Title Page"
 
-    unique_items = list(set(unique_items))
+def show_recommendation_page():
+    st.title('Recommendation Page')
+    customer_id = st.selectbox('Select Customer ID:', recommendation_df['Customer ID'].unique())
+    recommendation_info = recommendation_df[recommendation_df['Customer ID'] == customer_id]
+    st.dataframe(recommendation_info)
+    if st.button("Back to Title Page"):
+        st.session_state.current_page = "Title Page"
 
-    unique_items.sort()
-
-    cleaned_items = [item.strip().strip("'") for item in unique_items]
-
-    list_one = []
-    list_two = []
-    list_three = []
-
-    # Iterate over each row in the dataframe
-    for index, row in df1.iterrows():
-        # Split the itemsets by comma and remove the leading and trailing whitespace
-        items = [item.strip().strip("'") for item in row['Item'].split(',')]
-        # Based on the number of items in the row, append to the respective list
-        if len(items) == 1:
-            list_one.append(items)
-        elif len(items) == 2:
-            list_two.append(items)
-        elif len(items) == 3:
-            list_three.append(items)
-            
-    return cleaned_items, list_one, list_two, list_three
-
-
+# Main function
 def main():
-    global page_number  # Use the global variable
-    
-    # Create a button to navigate to different pages
-    if st.button("BI Reporting"):
-        page_number = 1
-    elif st.button("Rules of Purchasing"):
-        page_number = 2
-    elif st.button("Recommendation"):
-        page_number = 3
-    elif st.button("Cluster"):
-        page_number = 4
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Title Page"
 
-    # Display content based on the page number
-    if page_number == 1:
-        st.write('BI')        
-    elif page_number == 2:
-        # Load data for "Rules of Purchasing" 
-        dfx = load_data1()   
-        # cleaned_items, list_one, list_two, list_three = transformations(dfx)     
-        st.write('Rules')
-    elif page_number == 3:
-        dfy = load_data2()
-        st.write('Reco')
-    elif page_number == 4:
-        st.write('Cluster')
-        
+    if st.session_state.current_page == "Title Page":
+        show_title_page()
+    elif st.session_state.current_page == "Recommendation Page":
+        show_recommendation_page()
+    elif st.session_state.current_page == "Cluster Page":
+        show_cluster_page()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
